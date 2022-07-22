@@ -1,9 +1,20 @@
 <script lang="ts">
+	import { invoke } from '@tauri-apps/api/tauri'
 	export let name: string;
+
+	const execute = async () => {
+		name = 'executing'
+		try {
+			const result = await invoke('execute')
+			name = `${result}`
+		} catch (e) {
+			name = `error=${e}`
+		}
+	}
 </script>
 
 <main>
-	<h1>Hello {name}!</h1>
+	<h1 on:click={execute}>Hello {name}!</h1>
 	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
 </main>
 
