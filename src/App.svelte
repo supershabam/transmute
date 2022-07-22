@@ -8,13 +8,13 @@
 		status = `executing ${wasmPath}`
 		try {
 			type Result = {
-				Stdout: string
+				stdout: string
 			}
 			const result = await invoke<Result>('execute', {
 				wasmPath
 			})
 			console.log(result)
-			status = `result = ${result.Stdout}`
+			status = `result = ${result.stdout}`
 		} catch (err) {
 			status = `error = ${err}`
 		}

@@ -3,19 +3,16 @@
     windows_subsystem = "windows"
 )]
 
+use serde::Serialize;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
-use std::sync::Arc;
-use serde::Serialize;
 
-use anyhow::anyhow;
 use anyhow::Result;
 use wasmer::{Instance, Module, Store};
 use wasmer_compiler_cranelift::Cranelift;
 use wasmer_engine_universal::Universal;
 use wasmer_vfs::host_fs::File;
-use wasmer_wasi::{Stdout, WasiEnv, WasiFs, WasiState};
+use wasmer_wasi::{WasiState};
 
 // exec expects a temp directory to be created and populated with any inputs
 // that the wasm program may expect.
@@ -51,30 +48,23 @@ pub async fn exec(wasm_path: impl AsRef<Path>, working_dir: impl AsRef<Path>) ->
     start.call(&[])?;
 
     let content = std::fs::read_to_string(&stdout_path)?;
-    println!("{}", content);
 
     Ok(content)
 }
 
 #[derive(Serialize)]
 struct ExecuteResponse {
-    Stdout: String,
+    stdout: String,
 }
 
 #[tauri::command]
 async fn execute(wasm_path: &str) -> Result<ExecuteResponse, String> {
-  let working_dir = "/Users/supershabam/wasms";
-  let result = exec(wasm_path, &working_dir).await;
-  match result {
-    Ok(stdout) => {
-      Ok(ExecuteResponse{
-        Stdout: stdout,
-      })
-    },
-    Err(err) => {
-      Err(format!("{}", err))
+    let working_dir = "/Users/supershabam/wasms";
+    let result = exec(wasm_path, &working_dir).await;
+    match result {
+        Ok(stdout) => Ok(ExecuteResponse { stdout: stdout }),
+        Err(err) => Err(format!("{}", err)),
     }
-  }
 }
 
 fn main() {
