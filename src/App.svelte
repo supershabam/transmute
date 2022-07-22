@@ -1,21 +1,43 @@
 <script lang="ts">
 	import { invoke } from '@tauri-apps/api/tauri'
-	export let name: string;
+	import { listen, Event } from '@tauri-apps/api/event'
 
-	const execute = async () => {
-		name = 'executing'
+	let status: string = 'awaiting file drop'
+
+	const execute = async (wasmPath: string) => {
+		status = `executing ${wasmPath}`
 		try {
-			const result = await invoke('execute')
-			name = `${result}`
-		} catch (e) {
-			name = `error=${e}`
+			type Result = {
+				Stdout: string
+			}
+			const result = await invoke<Result>('execute', {
+				wasmPath
+			})
+			console.log(result)
+			status = `result = ${result.Stdout}`
+		} catch (err) {
+			status = `error = ${err}`
 		}
 	}
+
+	listen('tauri://file-drop', (e: Event<string[]>) => {
+		const wasmPath = e.payload[0]
+		execute(wasmPath)
+	})
+
+	// listen('tauri://file-drop', (e: Event<string[]>) => {
+	// })
+
+	// listen("tauri://file-drop-hover", (e: Event<string[]>) => {
+	// })
+
+	// listen("tauri://file-drop-cancelled", (e: Event<string[]>) => {
+	// })
 </script>
 
 <main>
-	<h1 on:click={execute}>Hello {name}!</h1>
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
+	<h1>drag and drop a wasm file to execute</h1>
+	<pre>{status}</pre>
 </main>
 
 <style>
