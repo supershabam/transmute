@@ -19,10 +19,12 @@ use wasmer_wasi::{Stdout, WasiEnv, WasiFs, WasiState};
 
 // exec expects a temp directory to be created and populated with any inputs
 // that the wasm program may expect.
-pub async fn exec(working_dir: impl AsRef<Path>) -> Result<String> {
+pub async fn exec(wasm_path: impl AsRef<Path>, working_dir: impl AsRef<Path>) -> Result<String> {
     let working_dir = working_dir.as_ref().to_path_buf();
     let stdout_path = working_dir.join("__stdout");
-    let wasm_bytes = include_bytes!("../../applications/hello/target/wasm32-wasi/release/hello.wasm");
+    let mut f = std::fs::File::open(wasm_path)?;
+    let mut wasm_bytes: Vec<u8> = Vec::new();
+    f.read_to_end(&mut wasm_bytes)?;
     let store = Store::new(&Universal::new(Cranelift::default()).engine());
     let module = Module::new(&store, wasm_bytes)?;
     // TODO (2022-05-10) can't figure out how to make the vfs_memory work
@@ -60,9 +62,9 @@ struct ExecuteResponse {
 }
 
 #[tauri::command]
-async fn execute() -> Result<ExecuteResponse, String> {
+async fn execute(wasm_path: &str) -> Result<ExecuteResponse, String> {
   let working_dir = "/Users/supershabam/wasms";
-  let result = exec(&working_dir).await;
+  let result = exec(wasm_path, &working_dir).await;
   match result {
     Ok(stdout) => {
       Ok(ExecuteResponse{
