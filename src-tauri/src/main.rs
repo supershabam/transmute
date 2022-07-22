@@ -22,7 +22,7 @@ use wasmer_wasi::{Stdout, WasiEnv, WasiFs, WasiState};
 pub async fn exec(working_dir: impl AsRef<Path>) -> Result<String> {
     let working_dir = working_dir.as_ref().to_path_buf();
     let stdout_path = working_dir.join("__stdout");
-    let wasm_bytes = include_bytes!("../../hello.wasm");
+    let wasm_bytes = include_bytes!("../../applications/hello/target/wasm32-wasi/release/hello.wasm");
     let store = Store::new(&Universal::new(Cranelift::default()).engine());
     let module = Module::new(&store, wasm_bytes)?;
     // TODO (2022-05-10) can't figure out how to make the vfs_memory work
@@ -49,6 +49,7 @@ pub async fn exec(working_dir: impl AsRef<Path>) -> Result<String> {
     start.call(&[])?;
 
     let content = std::fs::read_to_string(&stdout_path)?;
+    println!("{}", content);
 
     Ok(content)
 }
